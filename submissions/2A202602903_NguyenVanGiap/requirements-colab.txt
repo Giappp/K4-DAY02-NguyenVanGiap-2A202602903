@@ -1,0 +1,10 @@
+# Keep Colab's preinstalled CUDA torch/torchvision pair.
+timm==1.0.20
+fvcore==0.1.5.post20221221
+openpyxl==3.1.5
+pytest>=8,<10
+scipy>=1.11,<2
+scikit-learn>=1.5,<2
+pandas>=2.2,<3
+matplotlib>=3.8,<4
+Pillow>=10,<13
