@@ -1,4 +1,4 @@
-"""Colab experiment orchestration. All selection is based on validation."""
+"""Kaggle experiment orchestration. All selection is based on validation."""
 import json
 from dataclasses import replace
 from pathlib import Path
@@ -245,9 +245,10 @@ def export_results(base, backbones, training, inference, final):
     def markdown(df):
         # No tabulate dependency required.
         return '| ' + ' | '.join(map(str, df.columns)) + ' |\n|' + '|'.join(['---']*len(df.columns)) + '|\n' + '\n'.join('| ' + ' | '.join(map(str, row)) + ' |' for row in df.itertuples(index=False, name=None))
-    report = '# DeepWeeds — kết quả chạy trên Colab\n\n'
+    report = '# DeepWeeds — kết quả chạy trên Kaggle\n\n'
     report += 'Báo cáo tự động từ lần chạy thật; các giả thuyết về ảnh lỗi cần người làm lab bổ sung sau khi xem ảnh.\n\n'
-    report += '## Dữ liệu và thiết lập\nFold 0 nguyên bản, 17.509 ảnh, chọn checkpoint/cấu hình trên validation. Test ở chung kết, 3 seed (0, 1, 2). Môi trường và tag trọng số: `runs/*/seed*/environment.json`; cấu hình: `config.json`. Chia ngẫu nhiên không theo địa điểm có thể làm kết quả lạc quan.\n\n'
+    test_status = 'Test ở chung kết, 3 seed (0, 1, 2).' if final else 'SMOKE: chưa chạy chung kết/test; số liệu không dùng để nộp bài.'
+    report += '## Dữ liệu và thiết lập\nFold 0 nguyên bản, 17.509 ảnh, chọn checkpoint/cấu hình trên validation. ' + test_status + ' Môi trường và tag trọng số: `runs/*/seed*/environment.json`; cấu hình: `config.json`. Chia ngẫu nhiên không theo địa điểm có thể làm kết quả lạc quan.\n\n'
     report += '## Backbone\n' + markdown(b[['exp_id', 'backbone', 'macro_f1_val', 'params_M', 'GMAC', 'p95']]) + '\n\n'
     report += '## Công thức huấn luyện\n' + markdown(t[['exp_id', 'axis', 'change', 'macro_f1_val', 'delta']]) + '\n\n'
     report += 'Vòng sàng lọc dùng một seed; chênh lệch nhỏ chưa đủ chứng minh cải thiện.\n\n'
@@ -259,6 +260,8 @@ def export_results(base, backbones, training, inference, final):
         noise = indexed.macro_f1_test_std.max()
         report += f'Δ macro-F1 test = {delta:.6f}; std lớn hơn = {noise:.6f}. ' + ('Δ vượt std.' if delta > noise else 'Chưa chứng minh cải thiện vượt nhiễu seed.') + '\n\n'
     report += '## Phân tích lỗi\nXem `curves/F01_confusion.png`, `curves/F01_errors.png` và sheet PerClass, đặc biệt Chinee Apple / Snake Weed. Hình lỗi chỉ dùng sau khi chốt cấu hình.\n\n'
+    if (output / 'migration.json').exists():
+        report += '## Chuyển phiên\nTiếp tục checkpoint từ phiên trước trên Kaggle. Metadata gốc và phần cứng lưu ở `migration.json`/`migration_originals/`. Độ trễ từng dòng thuộc GPU đã khai báo ở dòng đó; không coi các phép đo trên GPU khác nhau là cùng điều kiện.\n\n'
     report += '## Hạn chế\nMột fold, ít seed, chưa kiểm chứng trên địa điểm/mùa khác. Độ trễ chỉ gồm forward và hậu xử lý suy luận, không gồm đọc ảnh. Đánh giá lại miền triển khai trước khi đưa lên robot.\n'
     (output / 'report.md').write_text(report, encoding='utf-8')
     json_write(output / 'all_results.json', {'backbones': backbones, 'training': training, 'inference': inference, 'final': final})
